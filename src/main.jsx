@@ -215,7 +215,7 @@ function VideoHero({ navigate }) {
         </div>
 
         <div className="hero-center reveal">
-          <p className="program-note">Personalized Guidance Available Now</p>
+          <p className="program-note">Protection. Planning. Peace of Mind.</p>
           <h1>
             <span>Protect your present.</span>
             <ShinyText>Secure your future.</ShinyText>

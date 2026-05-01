@@ -2,52 +2,78 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const services = [
+const navItems = [
+  ['/', 'Home'],
+  ['/services', 'Services'],
+  ['/about', 'About us'],
+  ['/contact', 'Contact'],
+];
+
+const serviceGroups = [
   {
-    kicker: '01',
+    number: '01',
     title: 'Auto & Home Insurance',
-    description:
-      'Protect your car, home, property, and liability with reliable coverage from top-rated carriers at competitive rates.',
+    intro: 'Protect what matters most with reliable coverage for your car and home.',
+    body:
+      'We work with top-rated carriers to find the best protection for your property, vehicles, and liability needs, always at a competitive rate.',
+    items: ['Auto coverage', 'Home protection', 'Property coverage', 'Liability guidance'],
   },
   {
-    kicker: '02',
+    number: '02',
     title: 'Health & Life Insurance',
-    description:
-      'Safeguard your family with affordable health plans and life insurance strategies built for long-term peace of mind.',
+    intro:
+      'Safeguard your family’s well-being and future with affordable health and life insurance options.',
+    body:
+      'We help you choose the right plan, from individual and family health coverage to life insurance that provides long-term security and peace of mind.',
+    items: ['Individual health plans', 'Family health coverage', 'Life insurance', 'Long-term security'],
   },
   {
-    kicker: '03',
+    number: '03',
     title: 'Financial & Tax Services',
-    description:
-      'Strengthen your financial foundation with accurate tax preparation, refund-focused planning, and year-round guidance.',
+    intro: 'Beyond insurance, we help you strengthen your financial foundation.',
+    body:
+      'Our tax preparation and financial consulting services ensure accuracy, maximize your refund, and guide you toward smarter financial decisions all year long.',
+    items: ['Tax preparation', 'Refund strategy', 'Financial consulting', 'Year-round planning'],
   },
   {
-    kicker: '04',
+    number: '04',
     title: 'Personalized Support',
-    description:
-      'Count on continuous policy management, claims assistance, and real support from a team that knows your goals.',
+    intro: 'Our team provides continuous guidance, policy management, and claim assistance.',
+    body:
+      'We believe in long-term relationships built on trust, service, and real results, so clients have a clear point of contact as their needs change.',
+    items: ['Policy management', 'Claim assistance', 'Plan reviews', 'Ongoing client care'],
   },
 ];
 
-const stats = [
-  ['Globe', 'Coverage guidance for individuals, families, and businesses'],
-  ['4+', 'Core service areas in one trusted group'],
-  ['1:1', 'Personalized attention for every client'],
+const trustPillars = [
+  ['Protection', 'Coverage that supports the people, property, and plans you value most.'],
+  ['Planning', 'Financial and tax guidance designed to help every decision fit the bigger picture.'],
+  ['Peace of mind', 'A team that keeps the process clear, personal, and grounded in your goals.'],
 ];
 
-function App() {
-  const [activeSection, setActiveSection] = useState('home');
+function useRoute() {
+  const [path, setPath] = useState(window.location.pathname);
 
-  const navItems = useMemo(
-    () => [
-      ['home', 'Home'],
-      ['services', 'Services'],
-      ['about', 'About us'],
-      ['contact', 'Contact'],
-    ],
-    [],
-  );
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
+  const navigate = (href) => {
+    if (href === window.location.pathname) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    window.history.pushState({}, '', href);
+    setPath(href);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return [path, navigate];
+}
+
+function useReveal(path) {
   useEffect(() => {
     const revealTargets = document.querySelectorAll('.reveal');
     const revealObserver = new IntersectionObserver(
@@ -58,149 +84,225 @@ function App() {
           }
         });
       },
-      { threshold: 0.18 },
+      { threshold: 0.15 },
     );
 
     revealTargets.forEach((target) => revealObserver.observe(target));
     return () => revealObserver.disconnect();
-  }, []);
+  }, [path]);
+}
 
-  useEffect(() => {
-    const sections = navItems
-      .map(([id]) => document.getElementById(id))
-      .filter(Boolean);
+function Link({ href, navigate, children, className = '', ...props }) {
+  return (
+    <a
+      className={className}
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        navigate(href);
+      }}
+      {...props}
+    >
+      {children}
+    </a>
+  );
+}
 
-    const sectionObserver = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (visible) {
-          setActiveSection(visible.target.id);
-        }
-      },
-      { threshold: [0.35, 0.6] },
-    );
-
-    sections.forEach((section) => sectionObserver.observe(section));
-    return () => sectionObserver.disconnect();
-  }, [navItems]);
-
+function Layout({ path, navigate, children }) {
   return (
     <main>
       <div className="background-grid" aria-hidden="true" />
       <header className="site-header">
-        <a className="brand" href="#home" aria-label="Nova home">
+        <Link className="brand" href="/" navigate={navigate} aria-label="Nova home">
           <img src="/logo.webp" alt="Nova Insurance & Financial Group" />
-        </a>
+        </Link>
         <nav aria-label="Primary navigation">
-          {navItems.map(([id, label]) => (
-            <a
-              key={id}
-              className={activeSection === id ? 'active' : ''}
-              href={`#${id}`}
+          {navItems.map(([href, label]) => (
+            <Link
+              key={href}
+              href={href}
+              navigate={navigate}
+              className={path === href ? 'active' : ''}
             >
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
       </header>
+      {children}
+      <Footer navigate={navigate} />
+    </main>
+  );
+}
 
-      <section id="home" className="hero page-section">
+function HeroVisual() {
+  return (
+    <div className="hero-visual reveal" aria-label="Nova brand presentation">
+      <div className="logo-stage">
+        <span className="scan-line" aria-hidden="true" />
+        <img src="/logo.webp" alt="" />
+      </div>
+      <div className="signal-card signal-card-left">
+        <span>Licensed professionals</span>
+        <strong>Reliable guidance</strong>
+      </div>
+      <div className="signal-card signal-card-right">
+        <span>Top carriers</span>
+        <strong>Tailored coverage</strong>
+      </div>
+    </div>
+  );
+}
+
+function Home({ navigate }) {
+  return (
+    <>
+      <section className="hero page-section">
         <div className="hero-glow hero-glow-one" aria-hidden="true" />
         <div className="hero-glow hero-glow-two" aria-hidden="true" />
         <div className="hero-copy reveal">
-          <p className="eyebrow">Insurance, financial, and tax services</p>
+          <p className="eyebrow">Insurance, financial, and tax services across the globe</p>
           <h1>Protecting your present, securing your future.</h1>
           <p className="hero-intro">
-            Welcome to Nova Insurance & Financial Group, your trusted partner
-            for protection, planning, and peace of mind across the globe.
+            Welcome to Nova Insurance & Financial Group, your trusted partner for
+            protection, planning, and peace of mind.
+          </p>
+          <p className="hero-intro">
+            We support individuals, families, and businesses with insurance,
+            financial, and tax services built around practical guidance and
+            personalized attention.
           </p>
           <div className="hero-actions">
-            <a className="primary-button" href="#contact">
-              Start your plan <span aria-hidden="true">{'->'}</span>
-            </a>
-            <a className="secondary-button" href="#services">
+            <Link className="primary-button" href="/contact" navigate={navigate}>
+              Request guidance <span aria-hidden="true">{'->'}</span>
+            </Link>
+            <Link className="secondary-button" href="/services" navigate={navigate}>
               Explore services
-            </a>
+            </Link>
           </div>
         </div>
+        <HeroVisual />
+      </section>
 
-        <div className="hero-visual reveal" aria-label="Nova brand shield">
-          <div className="logo-stage">
-            <span className="scan-line" aria-hidden="true" />
-            <img src="/logo.webp" alt="" />
-          </div>
-          <div className="signal-card signal-card-left">
-            <span>Licensed professionals</span>
-            <strong>Reliable guidance</strong>
-          </div>
-          <div className="signal-card signal-card-right">
-            <span>Top carriers</span>
-            <strong>Tailored coverage</strong>
-          </div>
+      <section className="statement-section page-section">
+        <div className="large-statement reveal">
+          <p>
+            At Nova, we believe that financial security begins with personalized
+            attention and reliable guidance.
+          </p>
+        </div>
+        <div className="statement-copy reveal">
+          <p>
+            Our licensed professionals work with top insurance carriers and
+            financial institutions to ensure you get the coverage and strategies
+            that truly fit your goals.
+          </p>
+          <p>
+            From health and life insurance to auto and home protection, and from
+            tax preparation to financial planning, we help you build a stronger,
+            safer future one decision at a time.
+          </p>
         </div>
       </section>
 
-      <section className="intro-band page-section">
-        <div className="intro-text reveal">
-          <p>
-            At Nova, financial security begins with personalized attention and
-            dependable guidance. Our licensed professionals work with leading
-            insurance carriers and financial institutions to match your coverage
-            and strategies with your real goals.
-          </p>
+      <section className="pillar-section page-section">
+        {trustPillars.map(([title, copy], index) => (
+          <article className="pillar-card reveal" style={{ '--delay': `${index * 80}ms` }} key={title}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <h2>{title}</h2>
+            <p>{copy}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="cta-band page-section reveal">
+        <div>
+          <p className="eyebrow">A stronger, safer future</p>
+          <h2>One trusted group for coverage, planning, taxes, and support.</h2>
         </div>
-        <div className="stats-grid reveal">
-          {stats.map(([value, label]) => (
-            <div className="stat" key={value}>
-              <strong>{value}</strong>
-              <span>{label}</span>
+        <Link className="primary-button" href="/about" navigate={navigate}>
+          Meet Nova <span aria-hidden="true">{'->'}</span>
+        </Link>
+      </section>
+    </>
+  );
+}
+
+function Services({ navigate }) {
+  return (
+    <>
+      <PageHero
+        eyebrow="Services"
+        title="Coverage and financial guidance designed around real life."
+        copy="Nova brings insurance, financial, and tax services together so clients can make confident decisions with one trusted team."
+        action={<Link className="primary-button" href="/contact" navigate={navigate}>Start a conversation <span aria-hidden="true">{'->'}</span></Link>}
+      />
+      <section className="service-page-grid page-section">
+        {serviceGroups.map((service, index) => (
+          <article
+            className="service-detail reveal"
+            style={{ '--delay': `${index * 70}ms` }}
+            key={service.title}
+          >
+            <div className="service-detail-number">{service.number}</div>
+            <div>
+              <h2>{service.title}</h2>
+              <p className="lead">{service.intro}</p>
+              <p>{service.body}</p>
+              <ul>
+                {service.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
             </div>
-          ))}
+          </article>
+        ))}
+      </section>
+      <section className="process-section page-section reveal">
+        <p className="eyebrow">How we support you</p>
+        <h2>Clear answers before, during, and after your policy decisions.</h2>
+        <div className="process-grid">
+          <div>
+            <strong>Review</strong>
+            <p>We listen to your needs, risks, family situation, business needs, and financial goals.</p>
+          </div>
+          <div>
+            <strong>Compare</strong>
+            <p>We look across carriers, plans, and financial options to help you understand practical choices.</p>
+          </div>
+          <div>
+            <strong>Support</strong>
+            <p>We stay available for policy management, claim questions, tax support, and plan updates.</p>
+          </div>
         </div>
       </section>
+    </>
+  );
+}
 
-      <section id="services" className="services page-section">
-        <div className="section-heading reveal">
-          <p className="eyebrow">Services</p>
-          <h2>Protection and planning that move with your life.</h2>
-          <p>
-            From health and life insurance to auto and home protection, tax
-            preparation, and financial consulting, Nova helps you build a
-            stronger future one clear decision at a time.
-          </p>
-        </div>
-        <div className="service-grid">
-          {services.map((service, index) => (
-            <article
-              className="service-card reveal"
-              style={{ '--delay': `${index * 90}ms` }}
-              key={service.title}
-            >
-              <span className="service-number">{service.kicker}</span>
-              <h3>{service.title}</h3>
-              <p>{service.description}</p>
-              <span className="card-line" aria-hidden="true" />
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="about" className="about page-section">
+function About({ navigate }) {
+  return (
+    <>
+      <PageHero
+        eyebrow="Who we are"
+        title="A team founded to protect your present and secure your future."
+        copy="Nova Insurance & Financial Group was founded with a single purpose: to empower individuals, families, and businesses with protection, planning, and peace of mind."
+        action={<Link className="primary-button" href="/contact" navigate={navigate}>Work with us <span aria-hidden="true">{'->'}</span></Link>}
+      />
+      <section className="about-story page-section">
         <div className="about-panel reveal">
-          <p className="eyebrow">Who we are</p>
-          <h2>Built on trust, transparency, and long-term relationships.</h2>
+          <h2>Dedicated professionals. Personalized solutions.</h2>
           <p>
-            Nova Insurance & Financial Group was founded with a single purpose:
-            to empower individuals, families, and businesses to protect their
-            present and secure their future.
+            We are a team of dedicated insurance and financial professionals
+            committed to providing personalized solutions in health, life, auto,
+            home, and financial services, including tax preparation and strategic
+            advisory.
           </p>
           <p>
-            We are dedicated insurance and financial professionals committed to
-            personalized solutions in health, life, auto, home, financial
-            services, tax preparation, and strategic advisory.
+            Our approach is built on trust, transparency, and long-term
+            relationships. Whether you’re seeking coverage, financial guidance, or
+            tax support, Nova offers a seamless experience that blends expertise,
+            integrity, and genuine care for every client.
           </p>
         </div>
         <div className="orbit reveal" aria-hidden="true">
@@ -212,15 +314,36 @@ function App() {
           <span className="orbit-dot dot-three" />
         </div>
       </section>
+      <section className="values-section page-section">
+        {['Trust', 'Transparency', 'Long-term relationships', 'Real results'].map((value, index) => (
+          <article className="value-card reveal" style={{ '--delay': `${index * 80}ms` }} key={value}>
+            <span>{value}</span>
+            <p>
+              We keep guidance clear, practical, and aligned with the client’s
+              present needs and future priorities.
+            </p>
+          </article>
+        ))}
+      </section>
+    </>
+  );
+}
 
-      <section id="contact" className="contact page-section">
+function Contact() {
+  return (
+    <>
+      <PageHero
+        eyebrow="Contact us"
+        title="We’d love to hear from you."
+        copy="Have questions about insurance, financial planning, or taxes? Fill out the form and our team will contact you shortly with personalized guidance."
+      />
+      <section className="contact page-section">
         <div className="contact-copy reveal">
-          <p className="eyebrow">Contact us</p>
-          <h2>Peace of mind starts with a conversation.</h2>
+          <h2>Your peace of mind is our priority.</h2>
           <p>
-            Have questions about insurance, financial planning, or taxes? Send
-            us a note and our team will contact you shortly with personalized
-            guidance.
+            At Nova Insurance & Financial Group, every conversation begins with
+            listening. Tell us what you need help with and we’ll guide you toward
+            the right next step.
           </p>
           <div className="contact-details">
             <a href="mailto:info@novainsurancefinancialgroup.com">
@@ -233,16 +356,16 @@ function App() {
         <form className="contact-form reveal">
           <div className="form-row">
             <label>
-              <span>First Name</span>
+              <span>First Name <em>(required)</em></span>
               <input name="firstName" type="text" required />
             </label>
             <label>
-              <span>Last Name</span>
+              <span>Last Name <em>(required)</em></span>
               <input name="lastName" type="text" required />
             </label>
           </div>
           <label>
-            <span>Email</span>
+            <span>Email <em>(required)</em></span>
             <input name="email" type="email" required />
           </label>
           <label className="checkbox-label">
@@ -250,50 +373,115 @@ function App() {
             <span>Sign up for news and updates</span>
           </label>
           <label>
-            <span>Message</span>
-            <textarea name="message" rows="5" required />
+            <span>Message <em>(required)</em></span>
+            <textarea name="message" rows="6" required />
           </label>
           <button type="submit">
-            Request guidance <span aria-hidden="true">{'->'}</span>
+            Send message <span aria-hidden="true">{'->'}</span>
           </button>
         </form>
       </section>
+    </>
+  );
+}
 
-      <footer className="footer">
-        <div className="footer-top">
-          <a href="#services">Services</a>
-          <a href="#about">About us</a>
-          <a href="#contact">Contact</a>
-          <a href="#terms">Terms & Conditions</a>
+function Terms() {
+  return (
+    <section className="plain-page page-section reveal">
+      <p className="eyebrow">Terms & Conditions</p>
+      <h1>Website terms and service information.</h1>
+      <p>
+        Information on this website is provided for general informational
+        purposes and does not replace personalized insurance, financial, tax, or
+        legal advice. Coverage, eligibility, rates, and services may vary based
+        on individual circumstances, carrier requirements, and applicable rules.
+      </p>
+      <p>
+        For guidance specific to your situation, contact Nova Insurance &
+        Financial Group directly.
+      </p>
+    </section>
+  );
+}
+
+function PageHero({ eyebrow, title, copy, action }) {
+  return (
+    <section className="page-hero page-section">
+      <div className="page-hero-copy reveal">
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+        <p>{copy}</p>
+        {action ? <div className="hero-actions">{action}</div> : null}
+      </div>
+      <div className="page-hero-mark reveal" aria-hidden="true">
+        <img src="/logo.webp" alt="" />
+      </div>
+    </section>
+  );
+}
+
+function Footer({ navigate }) {
+  return (
+    <footer className="footer">
+      <div className="footer-top">
+        <Link href="/services" navigate={navigate}>Services</Link>
+        <Link href="/about" navigate={navigate}>About us</Link>
+        <Link href="/contact" navigate={navigate}>Contact</Link>
+        <Link href="/terms" navigate={navigate}>Terms & Conditions</Link>
+      </div>
+      <div className="footer-info">
+        <div>
+          <h2>Location</h2>
+          <p>11011 Richmond Ave, Suite 732 Houston, TX 77042</p>
+          <p>11601 N Lamar Blvd suite 3 Austin TX 78753</p>
         </div>
-        <div className="footer-info">
-          <div>
-            <h2>Location</h2>
-            <p>11011 Richmond Ave, Suite 732 Houston, TX 77042</p>
-            <p>11601 N Lamar Blvd suite 3 Austin TX 78753</p>
-          </div>
-          <div>
-            <h2>Hours</h2>
-            <p>Monday - Friday<br />10:00am - 6:00pm</p>
-            <p>Saturday<br />10:00am - 5:00pm</p>
-          </div>
-          <div>
-            <h2>Contact</h2>
-            <p>
-              <a href="mailto:info@novainsurancefinancialgroup.com">
-                info@novainsurancefinancialgroup.com
-              </a>
-              <br />
-              <a href="tel:+15122398816">(512) 239-8816</a>
-            </p>
-          </div>
+        <div>
+          <h2>Hours</h2>
+          <p>Monday - Friday<br />10:00am - 6:00pm</p>
+          <p>Saturday<br />10:00am - 5:00pm</p>
         </div>
-        <div id="terms" className="footer-bottom">
-          <span>Nova Insurance & Financial Group</span>
-          <span>Protection. Planning. Peace of mind.</span>
+        <div>
+          <h2>Contact</h2>
+          <p>
+            <a href="mailto:info@novainsurancefinancialgroup.com">
+              info@novainsurancefinancialgroup.com
+            </a>
+            <br />
+            <a href="tel:+15122398816">(512) 239-8816</a>
+          </p>
         </div>
-      </footer>
-    </main>
+      </div>
+      <div className="footer-bottom">
+        <span>Nova Insurance & Financial Group</span>
+        <span>Protection. Planning. Peace of mind.</span>
+      </div>
+    </footer>
+  );
+}
+
+function App() {
+  const [path, navigate] = useRoute();
+  const normalizedPath = useMemo(() => {
+    if (path === '/services' || path === '/about' || path === '/contact' || path === '/terms') {
+      return path;
+    }
+    return '/';
+  }, [path]);
+
+  useReveal(normalizedPath);
+
+  const pages = {
+    '/': <Home navigate={navigate} />,
+    '/services': <Services navigate={navigate} />,
+    '/about': <About navigate={navigate} />,
+    '/contact': <Contact />,
+    '/terms': <Terms />,
+  };
+
+  return (
+    <Layout path={normalizedPath} navigate={navigate}>
+      {pages[normalizedPath]}
+    </Layout>
   );
 }
 

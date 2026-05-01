@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { motion } from 'framer-motion';
+import { ArrowRight, Menu } from 'lucide-react';
 import './styles.css';
+
+const heroVideo =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4';
 
 const navItems = [
   ['/', 'Home'],
@@ -109,80 +114,137 @@ function Link({ href, navigate, children, className = '', ...props }) {
 }
 
 function Layout({ path, navigate, children }) {
+  const isHome = path === '/';
+
   return (
-    <main>
+    <main className={isHome ? 'has-video-hero' : ''}>
       <div className="background-grid" aria-hidden="true" />
-      <header className="site-header">
-        <Link className="brand" href="/" navigate={navigate} aria-label="Nova home">
-          <img src="/logo.webp" alt="Nova Insurance & Financial Group" />
-        </Link>
-        <nav aria-label="Primary navigation">
-          {navItems.map(([href, label]) => (
-            <Link
-              key={href}
-              href={href}
-              navigate={navigate}
-              className={path === href ? 'active' : ''}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-      </header>
+      {!isHome ? <SiteHeader path={path} navigate={navigate} /> : null}
       {children}
       <Footer navigate={navigate} />
     </main>
   );
 }
 
-function HeroVisual() {
+function SiteHeader({ path, navigate, variant = 'standard' }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeAndNavigate = (href) => {
+    setMobileOpen(false);
+    navigate(href);
+  };
+
   return (
-    <div className="hero-visual reveal" aria-label="Nova brand presentation">
-      <div className="logo-stage">
-        <span className="scan-line" aria-hidden="true" />
-        <img src="/logo.webp" alt="" />
+    <header className={`site-header ${variant === 'hero' ? 'site-header-hero' : ''}`}>
+      <Link className="brand" href="/" navigate={navigate} aria-label="Nova home">
+        <span className="brand-orb" aria-hidden="true">
+          <span />
+        </span>
+        <span className="brand-name">Nova</span>
+      </Link>
+      <nav aria-label="Primary navigation">
+        {navItems.map(([href, label]) => (
+          <Link
+            key={href}
+            href={href}
+            navigate={closeAndNavigate}
+            className={path === href ? 'active' : ''}
+          >
+            {label}
+            {href === '/contact' ? <ArrowRight size={14} strokeWidth={2.4} /> : null}
+          </Link>
+        ))}
+      </nav>
+      <button
+        className="mobile-menu-button"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((open) => !open)}
+      >
+        <Menu size={22} />
+      </button>
+      <div className={`mobile-menu ${mobileOpen ? 'is-open' : ''}`}>
+        {navItems.map(([href, label]) => (
+          <Link
+            key={href}
+            href={href}
+            navigate={closeAndNavigate}
+            className={path === href ? 'active' : ''}
+          >
+            {label}
+            {href === '/contact' ? <ArrowRight size={14} strokeWidth={2.4} /> : null}
+          </Link>
+        ))}
       </div>
-      <div className="signal-card signal-card-left">
-        <span>Licensed professionals</span>
-        <strong>Reliable guidance</strong>
+    </header>
+  );
+}
+
+function ShinyText({ children }) {
+  return (
+    <motion.span
+      className="shiny-text"
+      animate={{ backgroundPosition: ['-220% center', '220% center'] }}
+      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+function VideoHero({ navigate }) {
+  return (
+    <section className="video-hero">
+      <video
+        className="hero-video"
+        src={heroVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden="true"
+      />
+      <div className="video-overlay" aria-hidden="true" />
+      <div className="video-hero-content">
+        <SiteHeader path="/" navigate={navigate} variant="hero" />
+
+        <div className="hero-topline reveal">
+          <p>
+            Insurance, financial, and tax services designed to support
+            individuals, families, and businesses across the globe.
+          </p>
+          <p>Protection, planning, and peace of mind from one trusted group.</p>
+        </div>
+
+        <div className="hero-center reveal">
+          <p className="program-note">Personalized Guidance Available Now</p>
+          <h1>
+            <span>Protect your present.</span>
+            <ShinyText>Secure your future.</ShinyText>
+          </h1>
+          <div className="hero-actions">
+            <Link className="hero-cta" href="/contact" navigate={navigate}>
+              Request Personalized Guidance
+              <ArrowRight className="cta-arrow" size={20} strokeWidth={2.4} />
+            </Link>
+          </div>
+        </div>
+
+        <div className="hero-bottomline reveal">
+          <span>Top-rated carriers</span>
+          <span>Licensed professionals</span>
+          <span>Tax and financial consulting</span>
+        </div>
       </div>
-      <div className="signal-card signal-card-right">
-        <span>Top carriers</span>
-        <strong>Tailored coverage</strong>
-      </div>
-    </div>
+    </section>
   );
 }
 
 function Home({ navigate }) {
   return (
     <>
-      <section className="hero page-section">
-        <div className="hero-glow hero-glow-one" aria-hidden="true" />
-        <div className="hero-glow hero-glow-two" aria-hidden="true" />
-        <div className="hero-copy reveal">
-          <p className="eyebrow">Insurance, financial, and tax services across the globe</p>
-          <h1>Protecting your present, securing your future.</h1>
-          <p className="hero-intro">
-            Welcome to Nova Insurance & Financial Group, your trusted partner for
-            protection, planning, and peace of mind.
-          </p>
-          <p className="hero-intro">
-            We support individuals, families, and businesses with insurance,
-            financial, and tax services built around practical guidance and
-            personalized attention.
-          </p>
-          <div className="hero-actions">
-            <Link className="primary-button" href="/contact" navigate={navigate}>
-              Request guidance <span aria-hidden="true">{'->'}</span>
-            </Link>
-            <Link className="secondary-button" href="/services" navigate={navigate}>
-              Explore services
-            </Link>
-          </div>
-        </div>
-        <HeroVisual />
-      </section>
+      <VideoHero navigate={navigate} />
 
       <section className="statement-section page-section">
         <div className="large-statement reveal">

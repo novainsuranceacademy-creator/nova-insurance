@@ -96,34 +96,8 @@ main {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  min-width: max-content;
-  color: var(--white);
-  font-size: 1.02rem;
-  font-weight: 950;
-}
-
-.brand-orb {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border: 2px solid var(--white);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.brand-orb span {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: var(--white);
-  box-shadow: 0 0 22px rgba(46, 163, 242, 0.8);
-}
-
-.brand-name {
-  display: inline-flex;
-  align-items: center;
+  width: min(280px, 31vw);
+  min-width: 190px;
 }
 
 .brand img {
@@ -1028,7 +1002,8 @@ textarea:focus {
   }
 
   .brand {
-    min-width: auto;
+    width: min(245px, 68vw);
+    min-width: 170px;
   }
 
   .video-hero-content {

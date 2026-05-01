@@ -137,10 +137,7 @@ function SiteHeader({ path, navigate, variant = 'standard' }) {
   return (
     <header className={`site-header ${variant === 'hero' ? 'site-header-hero' : ''}`}>
       <Link className="brand" href="/" navigate={navigate} aria-label="Nova home">
-        <span className="brand-orb" aria-hidden="true">
-          <span />
-        </span>
-        <span className="brand-name">Nova</span>
+        <img src="/logo.webp" alt="Nova Insurance & Financial Group" />
       </Link>
       <nav aria-label="Primary navigation">
         {navItems.map(([href, label]) => (
